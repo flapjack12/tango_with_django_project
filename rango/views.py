@@ -14,21 +14,24 @@ from datetime import datetime
 def index(request):
     category_list = Category.objects.order_by('-likes')[:5]
     page_list = Page.objects.order_by('-views')[:5]
-    visits = int(request.COOKIES.get('visits', '1'))
 
     context_dict = {}
     context_dict['boldmessage'] = 'Crunchy, creamy, cookie, candy, cupcake!'
     context_dict['categories'] = category_list
     context_dict['pages'] = page_list
-    context_dict['visits'] = visits
+    
+    visitor_cookie_handler(request)
+    context_dict['visits'] = request.session['visits']
 
     response = render(request, 'rango/index.html', context=context_dict)
-    visitor_cookie_handler(request, response)
-    
     return response
 
 def about(request):
-    context_dict = {'boldmessage': 'This tutorial has been put together by Eloise.'}
+    visitor_cookie_handler(request)
+    visits = request.session.get('visits', 1)
+
+    context_dict = {'boldmessage': 'This tutorial has been put together by Eloise.',
+                    'visits': visits}
     
     return render(request, 'rango/about.html', context=context_dict)
 
@@ -159,7 +162,7 @@ def get_server_side_cookie(request, cookie, default_val=None):
         val = default_val
     return val
 
-def visitor_cookie_handler(request, response):
+def visitor_cookie_handler(request):
     visits = int(get_server_side_cookie(request, 'visits', '1'))
 
     last_visit_cookie = get_server_side_cookie(request, 'last_visit', str(datetime.now()))
